@@ -69,49 +69,47 @@ with st.sidebar:
     st.markdown("**Licens:** MIT License")
 
 # Quick instructions (always visible, compact)
-st.info("💡 **Snabbguide:** Skriv taktnummer + mellanslag + text på varje rad. Exempel: `29 When the day is through,`")
+st.info("💡 **Snabbguide:** Skriv text på varje rad. Taktnummer är valfritt. Exempel: `29 When the day is through,` eller bara `When the day is through,`")
 
-# Example loading buttons
-col1, col2, col3 = st.columns([1, 1, 2])
-with col1:
-    load_example = st.button("📝 Ladda exempel", use_container_width=True)
-with col2:
-    clear_text = st.button("🗑️ Rensa", use_container_width=True)
-
-# Default and example texts
-example_text = """29 When the day is through,
+# Default example for placeholder
+example_placeholder = """29 When the day is through,
 31 I suffer no,
 32 no regrets. know that he who frets,
 35 loses the, loses the night.
 37 For only a fool,
 39 thinks he can hold back the dawn"""
 
-# Handle button clicks
+# Session state for text and parsed status
 if 'text_content' not in st.session_state:
-    st.session_state.text_content = example_text
-
-if load_example:
-    st.session_state.text_content = example_text
-    st.rerun()
-
-if clear_text:
     st.session_state.text_content = ""
-    st.rerun()
+if 'parsed_phrases' not in st.session_state:
+    st.session_state.parsed_phrases = None
 
 # Main input area
-st.subheader("1. Klistra in och redigera text")
+col1, col2 = st.columns([5, 1])
+with col1:
+    st.subheader("1. Klistra in och redigera text")
+with col2:
+    st.write("")  # Spacing
+    if st.button("🗑️ Rensa", use_container_width=True):
+        st.session_state.text_content = ""
+        st.session_state.parsed_phrases = None
+        st.rerun()
 
 text_input = st.text_area(
     "Text:",
     value=st.session_state.text_content,
     height=300,
-    placeholder="Exempel:\n29 When the day is through,\n31 I suffer no,\n32 no regrets...",
-    help="Format: TAKTNUMMER MELLANSLAG TEXT\nVarje rad = en fras",
-    key="text_area"
+    placeholder=example_placeholder,
+    help="Skriv eller klistra in din text här. Taktnummer är valfritt.",
+    key="text_area",
+    label_visibility="collapsed"
 )
 
-# Update session state
-st.session_state.text_content = text_input
+# Apply button (mobile-friendly)
+if st.button("✓ Tillämpa ändringar", use_container_width=True, type="secondary"):
+    st.session_state.text_content = text_input
+    st.rerun()
 
 # Real-time validation and preview
 lines = [line.strip() for line in text_input.split('\n') if line.strip()]
@@ -144,38 +142,33 @@ if lines:
         with st.expander("⚠️ Visa fel", expanded=True):
             for idx, line in error_lines:
                 st.error(f"**Rad {idx}:** {line[:60]}{'...' if len(line) > 60 else ''}")
-            st.caption("💡 Rätt format: `NUMMER mellanslag TEXT` (t.ex. `29 When the day...`)")
+            st.caption("💡 Varje rad ska innehålla text. Taktnummer är valfritt (t.ex. `29 When the day...` eller bara `When the day...`)")
 else:
-    st.warning("Ingen text att bearbeta. Klistra in text eller ladda exempel.")
+    st.warning("Ingen text att bearbeta. Klistra in text i rutan ovan.")
 
-# Generate button
-st.subheader("3. Generera fonetisk tabell")
+# Generate and download section
+st.subheader("3. Generera och ladda ner fonetisk tabell")
 
-col1, col2 = st.columns([2, 2])
+# Filename input
+filename = st.text_input(
+    "Filnamn:",
+    value="fonetisk_tabell.xlsx",
+    help="Namnet på den genererade Excel-filen"
+)
 
-with col1:
-    filename = st.text_input(
-        "Filnamn:",
-        value="fonetisk_tabell.xlsx",
-        help="Namnet på den genererade Excel-filen"
-    )
+# Ensure .xlsx extension
+if filename and not filename.endswith('.xlsx'):
+    filename += '.xlsx'
 
-    # Ensure .xlsx extension
-    if filename and not filename.endswith('.xlsx'):
-        filename += '.xlsx'
-
-with col2:
-    st.write("")  # Spacing
-    st.write("")  # Spacing
-
-# Generate button (disabled if there are errors)
+# Check if we can generate
 can_generate = valid_lines > 0 and len(error_lines) == 0
 
 if not can_generate and lines:
     st.warning("⚠️ Rätta felen innan du genererar tabellen")
 
+# Single button to generate AND download
 generate_button = st.button(
-    "🎵 Generera fonetisk tabell",
+    "🎵 Generera och ladda ner Excel-fil",
     type="primary",
     use_container_width=True,
     disabled=not can_generate
@@ -217,7 +210,7 @@ if generate_button:
 
                 st.success(f"✅ Fonetisk tabell genererad! ({len(phrases)} fraser)")
 
-                # Download button
+                # Download button appears immediately
                 st.download_button(
                     label="📥 Ladda ner Excel-fil",
                     data=excel_data,

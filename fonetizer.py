@@ -82,18 +82,19 @@ CONSONANTS = set("bcdfghjklmnpqrstvwxyzðθʃʒŋʧʤ")
 
 def parse_input_line(line: str) -> Tuple[str, str]:
     """
-    Parse input line format: N text
+    Parse input line format: N text or just text
 
-    Where N is the starting measure number (no T prefix, no end measure).
+    Where N is the starting measure number (optional, no T prefix, no end measure).
 
     Returns:
-        (start_measure, text)
+        (start_measure, text) - start_measure is empty string if not provided
     """
     match = re.match(r'(\d+)\s+(.+)', line.strip())
-    if not match:
-        raise ValueError(f"Invalid line format: {line}")
+    if match:
+        return match.group(1), match.group(2)
 
-    return match.group(1), match.group(2)
+    # No measure number - just return the text with empty measure
+    return "", line.strip()
 
 
 def text_to_ipa(word: str) -> str:

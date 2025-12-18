@@ -71,6 +71,57 @@ with st.sidebar:
 # Quick instructions (always visible, compact)
 st.info("💡 **Snabbguide:** Skriv text på varje rad. Taktnummer är valfritt. Exempel: `29 When the day is through` eller bara `When the day is through`.")
 
+# Expandable detailed guide
+with st.expander("📖 Hur fungerar det? (Klicka för att läsa mer)"):
+    st.markdown("""
+    ### Så här använder du Fonetizer
+
+    **1. Klistra in din text**
+    - En fras per rad
+    - Taktnummer är valfritt (t.ex. `29 When the day...` eller bara `When the day...`)
+
+    **2. Kolla status**
+    - Ser du "✅ X fraser redo att generera"? Då är allt OK!
+
+    **3. Ange filnamn**
+    - Välj ett beskrivande namn för din tabell
+
+    **4. Generera och ladda ner**
+    - Ett klick för att generera
+    - Ett klick för att ladda ner
+
+    ---
+
+    ### Vad får jag ut?
+
+    Du får en **Excel-tabell** med dina låttexter uppdelade i:
+    - **Konsonanter** (vänster kolumn, högerställd)
+    - **Vokaler** (höger kolumn, vänsterställd)
+
+    Varje rad = en stavelse att sjunga. Vokalen bär tonen!
+
+    ---
+
+    ### Tips för bästa resultat
+
+    ✅ Öppna filen i **Microsoft Excel** eller **Google Sheets**
+    ✅ Använd tabellen vid repetitioner för bättre vokalbalans
+    ✅ Sjung först bara vokalkolumnen (höger) för att träna enhetlighet
+
+    ---
+
+    ### Vill du veta mer?
+
+    📚 **Fullständig guide:** [GUIDE_SV.md](https://github.com/LauraMardones/fonetizer/blob/main/GUIDE_SV.md)
+    📚 **English guide:** [GUIDE_EN.md](https://github.com/LauraMardones/fonetizer/blob/main/GUIDE_EN.md)
+
+    Guiderna innehåller:
+    - Detaljerad förklaring av tabellstrukturen
+    - Tips för sångare och kvartetter
+    - Exempel från barbershop-låtar
+    - Vanliga frågor (FAQ)
+    """)
+
 # Default example for placeholder
 example_placeholder = """Exempel:
 29 When the day is through,

@@ -1,6 +1,26 @@
-# Fonetizer
+# 🎵 Fonetizer
 
 A tool that converts English song lyrics into singing-phonetic tables for vocal performance, optimized for vowel carrying, legato, and minimal consonant friction.
+
+**Perfect for barbershop quartets!** 🎶
+
+---
+
+## 📚 User Guides
+
+**New to Fonetizer? Start here:**
+
+- 🇸🇪 **[Svensk guide (GUIDE_SV.md)](GUIDE_SV.md)** - Komplett manual på svenska
+- 🇬🇧 **[English guide (GUIDE_EN.md)](GUIDE_EN.md)** - Complete manual in English
+
+These guides include:
+- Step-by-step instructions
+- Understanding the phonetic table
+- Tips for singers and quartets
+- Frequently asked questions
+- Technical details
+
+---
 
 ## Purpose
 
@@ -75,28 +95,41 @@ CSV files need manual formatting in Excel/Sheets.
 
 ## Input Format
 
-Each line must contain:
+Each line can contain:
+
+**With measure numbers:**
 ```
 N <text>
 ```
 
+**Without measure numbers:**
+```
+<text>
+```
+
 Where:
-- `N` = starting measure number (just the number, no "T" prefix)
-- Space (not colon) after the number
+- `N` = starting measure number (optional, just the number, no "T" prefix)
+- Space after the number
 - `<text>` = the lyric phrase
 
-**Example:**
+**Example with measure numbers:**
 ```
-1 I used to be the first one to cry
-4 when I'd think what tomorrow would bring
-8 Then you came my way
-10 turned my night into day, know
+1 There's a party tonight everyone is coming,
+3 the music is high all the folks
+5 enjoyin' and dancing the night away.
+```
+
+**Example without measure numbers:**
+```
+There's a party tonight everyone is coming,
+the music is high all the folks
+enjoyin' and dancing the night away.
 ```
 
 **Important:**
 - Exactly one phrase per line
-- Only starting measure needed (no end measure)
-- Do not change phrase divisions
+- Measure numbers are optional
+- If using measure numbers, only starting measure needed (no end measure)
 
 ## Output Format
 

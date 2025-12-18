@@ -69,21 +69,22 @@ with st.sidebar:
     st.markdown("**Licens:** MIT License")
 
 # Quick instructions (always visible, compact)
-st.info("💡 **Snabbguide:** Skriv text på varje rad. Taktnummer är valfritt. Exempel: `29 When the day is through,` eller bara `When the day is through,`")
+st.info("💡 **Snabbguide:** Skriv text på varje rad. Taktnummer är valfritt. Exempel: `29 When the day is through` eller bara `When the day is through`.")
 
 # Default example for placeholder
-example_placeholder = """29 When the day is through,
+example_placeholder = """Exempel:
+29 When the day is through,
 31 I suffer no,
 32 no regrets. know that he who frets,
 35 loses the, loses the night.
 37 For only a fool,
 39 thinks he can hold back the dawn"""
 
-# Session state for text and parsed status
-if 'text_content' not in st.session_state:
-    st.session_state.text_content = ""
-if 'parsed_phrases' not in st.session_state:
-    st.session_state.parsed_phrases = None
+# Session state for text and generated file
+if 'text_input_key' not in st.session_state:
+    st.session_state.text_input_key = 0
+if 'generated_excel' not in st.session_state:
+    st.session_state.generated_excel = None
 
 # Main input area
 col1, col2 = st.columns([5, 1])
@@ -91,24 +92,29 @@ with col1:
     st.subheader("1. Klistra in och redigera text")
 with col2:
     st.write("")  # Spacing
-    if st.button("🗑️ Rensa", use_container_width=True):
-        st.session_state.text_content = ""
-        st.session_state.parsed_phrases = None
+    if st.button("🔄 Börja om", use_container_width=True):
+        # Increment key to create a new text_area widget (this clears it)
+        st.session_state.text_input_key += 1
+        st.session_state.generated_excel = None
         st.rerun()
 
 text_input = st.text_area(
     "Text:",
-    value=st.session_state.text_content,
     height=300,
     placeholder=example_placeholder,
     help="Skriv eller klistra in din text här. Taktnummer är valfritt.",
-    key="text_area",
+    key=f"text_area_{st.session_state.text_input_key}",
     label_visibility="collapsed"
 )
 
+# Clear generated file when text changes
+if text_input and st.session_state.generated_excel is not None:
+    if text_input != st.session_state.generated_excel.get('source_text', ''):
+        st.session_state.generated_excel = None
+
 # Apply button (mobile-friendly)
 if st.button("✓ Tillämpa ändringar", use_container_width=True, type="secondary"):
-    st.session_state.text_content = text_input
+    # Force re-render to apply changes
     st.rerun()
 
 # Real-time validation and preview
@@ -125,29 +131,23 @@ for idx, line in enumerate(lines, 1):
     except ValueError:
         error_lines.append((idx, line))
 
-# Status display
+# Status display - only show if there are errors
 st.subheader("2. Status")
 
 if lines:
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("📝 Totalt fraser", len(lines))
-    with col2:
-        st.metric("✅ Korrekta", valid_lines)
-    with col3:
-        st.metric("❌ Fel", len(error_lines))
-
     # Show errors if any
     if error_lines:
-        with st.expander("⚠️ Visa fel", expanded=True):
-            for idx, line in error_lines:
-                st.error(f"**Rad {idx}:** {line[:60]}{'...' if len(line) > 60 else ''}")
-            st.caption("💡 Varje rad ska innehålla text. Taktnummer är valfritt (t.ex. `29 When the day...` eller bara `When the day...`)")
+        st.error(f"⚠️ {len(error_lines)} rad(er) med fel:")
+        for idx, line in error_lines:
+            st.write(f"**Rad {idx}:** {line[:60]}{'...' if len(line) > 60 else ''}")
+        st.caption("💡 Varje rad ska innehålla text. Taktnummer är valfritt (t.ex. `29 When the day...` eller bara `When the day...`)")
+    else:
+        st.success(f"✅ {valid_lines} fraser redo att generera!")
 else:
-    st.warning("Ingen text att bearbeta. Klistra in text i rutan ovan.")
+    st.info("Klistra in text i rutan ovan för att komma igång.")
 
 # Generate and download section
-st.subheader("3. Generera och ladda ner fonetisk tabell")
+st.subheader("3. Ange filnamn och generera")
 
 # Filename input
 filename = st.text_input(
@@ -164,21 +164,20 @@ if filename and not filename.endswith('.xlsx'):
 can_generate = valid_lines > 0 and len(error_lines) == 0
 
 if not can_generate and lines:
-    st.warning("⚠️ Rätta felen innan du genererar tabellen")
+    st.warning("⚠️ Rätta felen innan du kan generera tabellen")
 
-# Single button to generate AND download
-generate_button = st.button(
-    "🎵 Generera och ladda ner Excel-fil",
-    type="primary",
-    use_container_width=True,
-    disabled=not can_generate
-)
+# Show generate button if file not yet generated OR if text has changed
+if st.session_state.generated_excel is None:
+    # Generate button
+    generate_clicked = st.button(
+        "🎵 Generera tabell",
+        type="primary",
+        use_container_width=True,
+        disabled=not can_generate
+    )
 
-if generate_button:
-    if not lines:
-        st.error("❌ Ingen text att bearbeta!")
-    else:
-        with st.spinner("🎵 Bearbetar text och genererar tabell..."):
+    if generate_clicked and can_generate:
+        with st.spinner("🎵 Genererar tabell..."):
             try:
                 # Parse all phrases
                 phrases = []
@@ -206,25 +205,37 @@ if generate_button:
                 try:
                     os.unlink(tmp_path)
                 except PermissionError:
-                    pass  # Windows sometimes holds the file, it will be cleaned up later
+                    pass
 
-                st.success(f"✅ Fonetisk tabell genererad! ({len(phrases)} fraser)")
-
-                # Download button appears immediately
-                st.download_button(
-                    label="📥 Ladda ner Excel-fil",
-                    data=excel_data,
-                    file_name=filename,
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True,
-                    type="primary"
-                )
+                # Store in session state with current filename and source text
+                st.session_state.generated_excel = {
+                    'data': excel_data,
+                    'filename': filename,
+                    'phrase_count': len(phrases),
+                    'source_text': text_input
+                }
 
                 st.balloons()
+                st.rerun()
 
             except Exception as e:
-                st.error(f"❌ Ett fel uppstod: {str(e)}")
+                st.error(f"❌ Ett fel uppstod vid generering: {str(e)}")
                 st.exception(e)
+
+# Show download button if file has been generated
+else:
+    st.success(f"✅ Tabell genererad med {st.session_state.generated_excel['phrase_count']} fraser!")
+
+    st.download_button(
+        label="📥 Ladda ner filen",
+        data=st.session_state.generated_excel['data'],
+        file_name=st.session_state.generated_excel['filename'],
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True,
+        type="primary"
+    )
+
+    st.info("💡 Tryck '🔄 Börja om' för att skapa en ny tabell")
 
 # Footer
 st.divider()
